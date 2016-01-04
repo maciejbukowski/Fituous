@@ -1,0 +1,179 @@
+﻿@model StripeFundamentals.Models.Book.CustomViewModel
+@{
+    ViewBag.Title = "Custom";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Book (custom)</h2>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="col-sm-6 col-md-4">
+            <div class="thumbnail">
+                <h4 class="text-center"><span class="label label-info">Self Published</span></h4>
+                <img src="~/Content/images/main-book.png" />
+                <div class="caption">
+                    <div class="row">
+                        <div class="col-md-6 col-xs-6">
+                            <h3>JavaScript Framework Guide</h3>
+                        </div>
+                        <div class="col-md-6 col-xs-6 price">
+                            <h3>
+                                <label>$39</label>
+                            </h3>
+                        </div>
+                    </div>
+                    <p>AngularJS, Backbone, Ember</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a class="btn btn-primary btn-product"><span class="glyphicon glyphicon-thumbs-up"></span> Like</a>
+                        </div>
+                        <div class="col-md-6">
+
+                            <button id="pay-button" type="submit" class="btn btn-success  btn-product"><span class="glyphicon glyphicon-shopping-cart"></span> Pay with Card</button>
+
+                        </div>
+
+                    </div>
+
+                    <p> </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="payment-form-container" class="col-md-6 well @Model.PaymentFormHiddenCss">
+
+            @using (Html.BeginForm("Custom", "Book", FormMethod.Post, new { id = "payment-form", @class = "cardInfo", accept_charset = "UTF-8", novalidate = "", autocomplete = "on" }))
+            {
+                @Html.AntiForgeryToken()
+
+
+
+                <div class="form-group">
+                    <label class="control-label">Accepted</label>
+                    <div class="row">
+                        <div class="col-md-10 card-images">
+                            <img src="~/Content/images/creditcards/visa.png" alt="visa" />
+                            <img src="~/Content/images/creditcards/mastercard.png" alt="mastercard" />
+                            <img src="~/Content/images/creditcards/amex.png" alt="amex" />
+                            <img src="~/Content/images/creditcards/discover.png" alt="discover" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cc-number" class="control-label">Card Number</label>
+                    <div class="input-group col-md-6">
+
+                        <input id="cc-number" data-stripe="number" type="tel" class="input-lg form-control cc-number" autocomplete="cc-number" placeholder="•••• •••• •••• ••••" required autofocus>
+                        <span class="glyphicon glyphicon-credit-card glyphicon-align-right form-control-feedback" aria-hidden="true"></span>
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="form-group col-md-4">
+                        <label for="cc-exp" class="control-label">Expires</label>
+                        <input id="cc-exp" data-stripe="exp" type="tel" class="input-lg form-control cc-exp" placeholder="MM / YY" required>
+                    </div>
+
+                    <div class="form-group col-md-3 ">
+                        <label for="cc-cvc" class="control-label">CVC</label>
+                        <input id="cc-cvc" data-stripe="cvc" type="tel" class="input-lg form-control cc-cvc" autocomplete="off" placeholder="•••" required>
+                        <span class="glyphicon glyphicon-lock  form-control-feedback" aria-hidden="true"></span>
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label for="email" class="control-label">Email</label>
+                    <div class="input-group col-md-6">
+
+                        <input id="email" type="email" name="stripeEmail" value="@Model.StripeEmail" class="input-lg form-control email" placeholder="Email" required>
+                        <span class="glyphicon glyphicon-envelope glyphicon-align-right form-control-feedback" aria-hidden="true"></span>
+                    </div>
+
+                </div>
+
+                @Html.HiddenFor(m => m.StripePublishableKey)
+                @Html.ValidationSummary(true, "There was an error. ", new { @class = "alert alert-danger" })
+
+                <div class="row">
+                    <div class="form-group col-md-6  ">
+                        <button type="submit" class="btn btn-success  btn-product"><span class="glyphicon glyphicon-shopping-cart"></span> Buy</button>
+                    </div>
+                </div>
+
+                <h3 class="validation"></h3>
+                <p class="alert alert-danger payment-errors" style="display:none; "></p>
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section scripts{
+    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+    <script type="text/javascript" src="~/Scripts/payment-validations.js"></script>
+    <script type="text/javascript" src="~/Scripts/jquery.payment.js"></script>
+
+    <script type="text/javascript">
+    Stripe.setPublishableKey("@Model.StripePublishableKey");
+
+    jQuery(function ($) {
+
+        $("#pay-button").click(function (e) {
+            $("#payment-form-container").toggleClass("hidden");
+        });
+
+        $('#payment-form').submit(function (e) {
+            e.preventDefault();
+            var $form = $(this);
+
+            // Disable the submit button to prevent repeated clicks
+            $form.find('button').prop('disabled', true);
+
+            //Stripe.card.createToken($form, stripeResponseHandler);
+            expiration = $('.cc-exp').payment('cardExpiryVal');
+            Stripe.card.createToken({
+                number: $('.cc-number').val(),
+                cvc: $('.cc-cvc').val(),
+                exp_month: (expiration.month || 0),
+                exp_year: (expiration.year || 0)
+            }, stripeResponseHandler);
+
+        });
+
+        stripeResponseHandler = function (status, response) {
+            var $form = $('#payment-form');
+
+            if (response.error) {
+                // Show the errors on the form
+                $paymentErrors = $form.find('.payment-errors');
+                $paymentErrors.text(response.error.message);
+                $paymentErrors.toggle($paymentErrors.text.length > 0);
+
+                $form.find('button').prop('disabled', false);
+            } else {
+                // token contains id, last4, and card type
+                var token = response.id;
+                // Insert the token into the form so it gets submitted to the server
+                $form.append($('<input type="hidden" name="stripeToken" />').val(token));
+                // and re-submit
+                $form.get(0).submit();
+            }
+        };
+
+
+
+
+    });
+    </script>
+
+}
+
+

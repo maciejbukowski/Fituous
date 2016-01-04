@@ -1,0 +1,157 @@
+﻿@model StripeFundamentals.Models.Subscription.BillingViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Your <strong>Free Trial</strong> Awaits</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <h4>Billing Information</h4>
+        <hr />
+
+        @using (Html.BeginForm("Billing", "Subscription", FormMethod.Post, new { id = "payment-form", @class = "cardInfo", accept_charset = "UTF-8", novalidate = "", autocomplete = "on" }))
+        {
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label class="control-label">Accepted</label>
+                <div class="row">
+                    <div class="col-md-10 card-images">
+                        <img src="~/Content/images/creditcards/visa.png" alt="visa" />
+                        <img src="~/Content/images/creditcards/mastercard.png" alt="mastercard" />
+                        <img src="~/Content/images/creditcards/amex.png" alt="amex" />
+                        <img src="~/Content/images/creditcards/discover.png" alt="discover" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="cc-number" class="control-label">Card Number</label>
+                <div class="input-group col-md-6">
+
+                    <input id="cc-number" data-stripe="number" type="tel" class="input-lg form-control cc-number" autocomplete="cc-number" placeholder="•••• •••• •••• ••••" required autofocus>
+                    <span class="glyphicon glyphicon-credit-card glyphicon-align-right form-control-feedback" aria-hidden="true"></span>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="form-group col-md-3">
+                    <label for="cc-exp" class="control-label">Expires</label>
+                    <input id="cc-exp" data-stripe="exp" type="tel" class="input-lg form-control cc-exp" placeholder="MM / YY" required>
+                </div>
+
+                <div class="form-group col-md-3 ">
+                    <label for="cc-cvc" class="control-label">CVC</label>
+                    <input id="cc-cvc" data-stripe="cvc" type="tel" class="input-lg form-control cc-cvc" autocomplete="off" placeholder="•••" required>
+                    <span class="glyphicon glyphicon-lock  form-control-feedback" aria-hidden="true"></span>
+                </div>
+
+            </div>
+
+
+            @Html.HiddenFor(m => m.StripePublishableKey)
+            @Html.HiddenFor(m => m.Plan.Id)
+            @Html.ValidationSummary(true, "There was an error. ", new { @class = "alert alert-danger" })
+
+            <div class="row">
+                <div class="form-group col-md-6  ">
+                    <button type="submit" class="btn btn-success  btn-product"><span class="glyphicon glyphicon-shopping-cart"></span> Start Using Software</button>
+                </div>
+            </div>
+
+            <h3 class="validation"></h3>
+            <p class="alert alert-danger payment-errors" style="display:none; "></p>
+        }
+
+    </div>
+    <div class="col-md-4">
+
+
+        <div class="current-plan alert alert-dismissible alert-info">
+            <div class="price">@Model.Plan.Name</div>
+            <h3>$@Model.Plan.AmountInDollars /@Model.Plan.Interval</h3>
+            <p>@Model.Plan.Description</p>
+            <hr />
+            <p>You can change your plan anytime (<a href="/subscription">see all plans</a>). Try it free for @Model.Plan.TrialPeriodDays days.</p>
+        </div>
+
+        <p><a href="#" data-toggle="tooltip" data-placement="bottom" title="We ask for your credit card to prevent interruption of your account should you decide to keep your account active once your trial expires. Your credit card will not be charged during your 15-day trial, and we will email you a few days before the first charge. If you decide that the software isn't for you, you can cancel anytime.">Why do we ask for your credit card?</a></p>
+
+        <p>There's no risk and you can cancel anytime with a single click from your dashboard.</p>
+    </div>
+</div>
+
+
+@section scripts{
+
+    <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+    <script type="text/javascript" src="~/Scripts/jquery.payment.js"></script>
+    <script type="text/javascript" src="~/Scripts/payment-validations.js"></script>
+
+    <script type="text/javascript">
+    // This identifies your website in the createToken call below
+    Stripe.setPublishableKey("@Model.StripePublishableKey");
+
+    var stripeResponseHandler = function (status, response) {
+        var $form = $('#payment-form');
+
+        if (response.error) {
+            // Show the errors on the form
+            $paymentErrors = $form.find('.payment-errors');
+            $paymentErrors.text(response.error.message);
+            $paymentErrors.toggle($paymentErrors.text.length > 0);
+
+            $form.find('button').prop('disabled', false);
+        } else {
+            // token contains id, last4, and card type
+            var token = response.id;
+            // Insert the token into the form so it gets submitted to the server
+            $form.append($('<input type="hidden" name="stripeToken" />').val(token));
+            // and re-submit
+            $form.get(0).submit();
+        }
+    };
+
+    jQuery(function ($) {
+
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+
+        $('#payment-form').submit(function (e) {
+            e.preventDefault();
+            var $form = $(this);
+
+
+            $form.validate({
+                errorPlacement: function (error, element) { }
+            });
+            if (!$form.valid()) { return;}
+
+            // Disable the submit button to prevent repeated clicks
+            $form.find('button').prop('disabled', true);
+
+            //can't do this because month and year are combined in one field
+            //Stripe.card.createToken($form, stripeResponseHandler);
+
+            expiration = $('.cc-exp').payment('cardExpiryVal');
+            Stripe.card.createToken({
+                number: $('.cc-number').val(),
+                cvc: $('.cc-cvc').val(),
+                exp_month: (expiration.month || 0),
+                exp_year: (expiration.year || 0)
+            }, stripeResponseHandler);
+
+        });
+    });
+    </script>
+
+}
+
+
+
+
