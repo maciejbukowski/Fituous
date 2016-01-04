@@ -1,31 +1,17 @@
 ﻿@{
-    ViewBag.Title = "Home Page";
+    ViewBag.Title = "Fituous";
 }
 
-<div class="jumbotron">
-    <h1>Stripe</h1>
-    <p class="lead">Easy payments for developers.</p>
-    <p><a href="http://stripe.com/docs" target="_blank" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+<div class="jumbotron" ng-controller="mainController">
+    <h1>Fituous</h1>
+    <p class="lead">Health and Fitness, done best.</p>
+    <p><a href="http://www.fituous.com" target="_blank" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
 </div>
 
 <div class="row">
-    <div class="col-md-4">
-        <h2>One-time Payment</h2>
-        <p>
-            This demo shows how to accept a one-time payment for a book with an embedded form.
-        </p>
-        <p>@Html.ActionLink("Details", "Index", "Book", routeValues: null, htmlAttributes: new { @class = "btn btn-default" })</p>
-    </div>
-    <div class="col-md-4">
-        <h2>One-time Payment Custom</h2>
-        <p>
-            This demo shows how to accept a one-time payment for a book with a custom form.
-        </p>
-        <p>@Html.ActionLink("Details", "Custom", "Book", routeValues: null, htmlAttributes: new { @class = "btn btn-default" })</p>
-    </div>
-    <div class="col-md-4">
+    <div class="col-md-12">
         <h2>Subscription Payments</h2>
-        <p>This demo shows you how to accept recurring payments for a subscription software service.</p>
+        <p>Become the best version of yourself, join today and get body of your dreams and develop a strong mind.</p>
         <p>@Html.ActionLink("Details", "Index", "Subscription", routeValues: null, htmlAttributes: new { @class = "btn btn-default" })</p>
     </div>
 </div>
